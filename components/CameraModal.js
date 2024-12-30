@@ -32,8 +32,8 @@ const CameraModal = ({ setShowCamera, setImage }) => {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          width: "100%",
-          height: "100%",
+          width: "95%",
+          height: "95%",
           backgroundColor: "transparent",
         },
         overlay: {

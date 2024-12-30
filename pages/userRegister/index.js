@@ -63,24 +63,15 @@ const UserRegisterAndUpdate = ({ router }) => {
       user ? true : false
     );
     if (isValid) {
-      if (user) {
-        await dispatch(
-          updateUserDetails({ data: formData, id: userDetails.id })
-        );
+      const userCredential = await dispatch(signupUser(formData));
+      if (userCredential?.payload?.code) {
+        setErrors({ ...errors, email: 'Email already registered' });
+        return;
+      }
+      const userUID = userCredential?.payload?.user?.uid;
+      if (userUID) {
+        await dispatch(saveUserData({ userUID, formData }));
         setShowConfirmationModal(true);
-      } else {
-        const userCredential = await dispatch(
-          signupUser({ email: formData.email, password: formData.password })
-        );
-        if (userCredential?.payload?.code) {
-          setErrors({ ...errors, email: 'Email already registered' });
-          return;
-        }
-        const userUID = userCredential?.payload?.user?.uid;
-        if (userUID) {
-          await dispatch(saveUserData({ userUID, formData }));
-          setShowConfirmationModal(true);
-        }
       }
     } else {
       setErrors(errors);
@@ -97,17 +88,16 @@ const UserRegisterAndUpdate = ({ router }) => {
   };
 
   useEffect(() => {
-    if (!userDetails?.id) {
+    if (userDetails?.id) {
       setFormData({
-        ...formData,
-        lastName: userDetails?.lastName,
-        firstName: userDetails?.firstName,
-        email: userDetails?.email,
-        phoneNumber: userDetails?.phoneNumber,
-        picture: userDetails?.picture
+        lastName: userDetails.lastName || '',
+        firstName: userDetails.firstName || '',
+        email: userDetails.email || '',
+        phoneNumber: userDetails.phoneNumber || '',
+        picture: userDetails.picture || ''
       });
     }
-  }, []);
+  }, [userDetails]);
 
   useEffect(() => {
     if (image) {
@@ -149,7 +139,6 @@ const UserRegisterAndUpdate = ({ router }) => {
             placeholder="Email"
             value={formData.email}
             onChange={(e) => handleChange('email', e.target.value)}
-            disabled={!!user}
           />
           <ErrorComponent errorMessage={errors.email} />
         </div>
@@ -222,6 +211,8 @@ const UserRegisterAndUpdate = ({ router }) => {
             className="rounded-md mb-4"
           />
         )}
+        <ErrorComponent errorMessage={errors.picture} />
+
         <button
           className={`w-full py-2 rounded-md text-white text-center ${
             loading || isLoading ? 'bg-gray-300' : 'bg-green-500'
@@ -231,7 +222,7 @@ const UserRegisterAndUpdate = ({ router }) => {
         >
           {loading || isLoading
             ? 'Loading...'
-            : !userDetails?.id 
+            : userDetails?.id
             ? 'Update'
             : 'Signup'}
         </button>

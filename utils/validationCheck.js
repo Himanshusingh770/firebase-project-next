@@ -7,9 +7,7 @@ const validateEmail = (email) => {
     if (!data || typeof data !== 'string' || !data.trim()) {
       return `${field} is required`;
     }
-  };
-  
-  
+  }; 
   const validatePassword = (password) => {
     let passwordError = validateField("Password", password);
     if (!passwordError) {
