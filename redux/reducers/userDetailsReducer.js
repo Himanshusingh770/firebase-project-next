@@ -1,25 +1,31 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import {
   collection,
   doc,
   getDocs,
   query,
   updateDoc,
-  where,
-} from "firebase/firestore";
-import { db } from "../../firebase/firebaseConfig";
+  where
+} from 'firebase/firestore';
+import { db } from '../../firebase/firebaseConfig';
 
 export const getUserDetails = createAsyncThunk(
-  "userDetails/getUserDetails",
+  'userDetails/getUserDetails',
   async (uid, { rejectWithValue }) => {
     try {
-      const usersCollectionRef = collection(db, "users");
-      const q = query(usersCollectionRef, where("uid", "==", `${uid}`));
-      const data = await getDocs(q);
-      if (!data.empty) {
-        return { ...data.docs[0].data(), id: data.docs[0].id };
+      const usersCollectionRef = collection(db, 'users');
+      const q = query(usersCollectionRef, where('uid', '==', `${uid}`));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        const userData = { ...userDoc.data(), id: userDoc.id };
+        // console.log(userData);
+
+        return userData;
+      } else {
+        return rejectWithValue('User not found');
       }
-      return rejectWithValue("User not found");
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -27,10 +33,10 @@ export const getUserDetails = createAsyncThunk(
 );
 
 export const updateUserDetails = createAsyncThunk(
-  "userDetails/updateUserDetails",
+  'userDetails/updateUserDetails',
   async (userData, { rejectWithValue }) => {
     try {
-      const userDoc = doc(db, "users", userData.id);
+      const userDoc = doc(db, 'users', userData.id);
       await updateDoc(userDoc, userData.data);
       return userData.data;
     } catch (error) {
@@ -40,17 +46,17 @@ export const updateUserDetails = createAsyncThunk(
 );
 
 const userDetailsSlice = createSlice({
-  name: "userDetails",
+  name: 'userDetails',
   initialState: {
     userDetails: {},
     isLoading: false,
     isSuccess: false,
-    error: null,
+    error: null
   },
   reducers: {
     resetUserDetails: (state) => {
       state.userDetails = {};
-    },
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -79,7 +85,7 @@ const userDetailsSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       });
-  },
+  }
 });
 
 export const { resetUserDetails } = userDetailsSlice.actions;

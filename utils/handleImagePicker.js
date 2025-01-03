@@ -95,7 +95,7 @@ export const handleImagePicker = () => {
       const file = event.target.files[0];
       if (file) {
         const imageUrl = URL.createObjectURL(file);
-        resolve(imageUrl); // Resolve with image URL
+        resolve({imageUrl, file}); // Resolve with image URL
       } else {
         reject('No file selected');
       }

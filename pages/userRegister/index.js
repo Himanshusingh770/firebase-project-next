@@ -1,22 +1,28 @@
+'use client';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faEye,
   faEyeSlash,
-  faImage,
-  faCamera
+  faImage
+  // faCamera
 } from '@fortawesome/free-solid-svg-icons';
 import Image from 'next/image';
 import { handleImagePicker } from '../../utils/handleImagePicker';
 import { saveUserData, signupUser } from '../../redux/reducers/authReducer';
-import { validateForm } from '../../utils/validationCheck';
+// import { validateForm } from '../../utils/validationCheck';
 import ConfirmationModal from '../../components/ConfirmModal';
 import ErrorComponent from '../../components/ErrorComponent';
-import CameraModal from '../../components/CameraModal';
-import { updateUserDetails } from '../../redux/reducers/userDetailsReducer';
+// import CameraModal from '../../components/CameraModal';
+import {
+  getUserDetails,
+  updateUserDetails
+} from '../../redux/reducers/userDetailsReducer';
+import { registerValidationSchema } from '@/validation/auth';
+import { useRouter } from 'next/router';
 
-const UserRegisterAndUpdate = ({ router }) => {
+const UserRegisterAndUpdate = () => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -24,7 +30,8 @@ const UserRegisterAndUpdate = ({ router }) => {
     phoneNumber: '',
     password: '',
     confirmPassword: '',
-    picture: ''
+    previewPicture: '',
+    uploadPicture: ''
   });
 
   const [errors, setErrors] = useState({
@@ -34,17 +41,20 @@ const UserRegisterAndUpdate = ({ router }) => {
     phoneNumber: '',
     password: '',
     confirmPassword: '',
-    picture: null
+    previewPicture: null,
+    uploadPicture: null
   });
 
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
+  // const [showCamera, setShowCamera] = useState(false);
   const [image, setImage] = useState(null);
   const dispatch = useDispatch();
   const { user, loading } = useSelector((state) => state.auth);
   const { userDetails, isLoading } = useSelector((state) => state.userDetails);
+  const router = useRouter();
+  // dispatch(getUserDetails("ArJDK7IcEAY3kwiiQqghQMhwYmp2"));
 
   const handleChange = (name, value) => {
     setFormData({ ...formData, [name]: value });
@@ -52,38 +62,76 @@ const UserRegisterAndUpdate = ({ router }) => {
   };
 
   const handleImageSelect = async () => {
-    const imageURL = (await handleImagePicker()) || null;
-    setFormData({ ...formData, picture: imageURL });
+    const { imageUrl, file } = (await handleImagePicker()) || null;
+    console.log(imageUrl, file);
+
+    setFormData({ ...formData, previewPicture: imageUrl, uploadPicture: file });
   };
 
+  // const onSubmit = async () => {
+
+  //   // const { isValid, errors } = validateForm(
+  //   //   formData,
+  //   //   false,
+  //   //   user ? true : false
+  //   // );
+  //   // console.log(isValid);
+
+  //   await authValidationSchema.validate(formData, { abortEarly: false });
+
+  //   if (isValid) {
+
+  //     console.log(formData);
+
+  //     const userCredential = await dispatch(signupUser(formData));
+  //     console.log(userCredential);
+
+  //     if (userCredential?.payload?.code) {
+  //       setErrors({ ...errors, email: 'Email already registered' });
+  //       return;
+  //     }
+
+  //     const userUID = userCredential?.payload?.uid;
+  //     if (userUID) {
+  //       // await dispatch(saveUserData({ userUID, formData }));
+  //       await dispatch(getUserDetails(userUID))
+  //       setShowConfirmationModal(true);
+  //     }
+  //   } else {
+  //     setErrors(errors);
+  //   }
+  // };
+
   const onSubmit = async () => {
-    const { isValid, errors } = validateForm(
-      formData,
-      false,
-      user ? true : false
-    );
-    if (isValid) {
+    try {
+      await registerValidationSchema.validate(formData, { abortEarly: false });
+
       const userCredential = await dispatch(signupUser(formData));
+
       if (userCredential?.payload?.code) {
         setErrors({ ...errors, email: 'Email already registered' });
         return;
       }
-      const userUID = userCredential?.payload?.user?.uid;
+
+      const userUID = userCredential?.payload?.uid;
       if (userUID) {
-        await dispatch(saveUserData({ userUID, formData }));
+        // await dispatch(saveUserData({ userUID, formData }));
+        await dispatch(getUserDetails(userUID));
         setShowConfirmationModal(true);
       }
-    } else {
-      setErrors(errors);
+    } catch (err) {
+      const validationErrors = {};
+      if (err.name === 'ValidationError') {
+        err.inner.forEach((error) => {
+          validationErrors[error.path] = error.message;
+        });
+      }
+      setErrors(validationErrors);
     }
   };
 
   const handleNavigate = () => {
-    if (!userDetails.id) {
-      router.replace('/home');
-    } else {
-      router.push('/all-post');
-    }
+    router.replace('/');
     setShowConfirmationModal(false);
   };
 
@@ -99,11 +147,11 @@ const UserRegisterAndUpdate = ({ router }) => {
     }
   }, [userDetails]);
 
-  useEffect(() => {
-    if (image) {
-      setFormData({ ...formData, picture: image });
-    }
-  }, [image]);
+  // useEffect(() => {
+  //   if (image) {
+  //     setFormData({ ...formData, picture: image });
+  //   }
+  // }, [image]);
 
   return (
     <div className="container mx-auto mt-20">
@@ -195,23 +243,23 @@ const UserRegisterAndUpdate = ({ router }) => {
           >
             <FontAwesomeIcon icon={faImage} />
           </button>
-          <button
+          {/* <button
             className="bg-blue-500 text-white px-4 py-2 rounded-md"
             onClick={() => setShowCamera(true)}
           >
             <FontAwesomeIcon icon={faCamera} />
-          </button>
+          </button> */}
         </div>
-        {formData.picture && (
+        {formData.previewPicture && (
           <Image
-            src={formData.picture}
+            src={formData.previewPicture}
             alt="User Profile"
             width={96}
             height={96}
             className="rounded-md mb-4"
           />
         )}
-        <ErrorComponent errorMessage={errors.picture} />
+        <ErrorComponent errorMessage={errors.previewPicture} />
 
         <button
           className={`w-full py-2 rounded-md text-white text-center ${
@@ -226,11 +274,11 @@ const UserRegisterAndUpdate = ({ router }) => {
             ? 'Update'
             : 'Signup'}
         </button>
-        {showConfirmationModal && (
+        {/* {showConfirmationModal && (
           <ConfirmationModal
             modalTitle="Success"
             modalSubTitle={
-              userDetails.id
+              userDetails?.id
                 ? 'User updated successfully'
                 : 'User registered successfully. Click OK to proceed.'
             }
@@ -239,10 +287,20 @@ const UserRegisterAndUpdate = ({ router }) => {
             onConfirm={handleNavigate}
             btnOkText="OK"
           />
+        )} */}
+        {showConfirmationModal && (
+          <ConfirmationModal
+            modalTitle="Success"
+            modalSubTitle={'User registered successfully. Click OK to proceed'}
+            visible={showConfirmationModal}
+            onClose={() => setShowConfirmationModal(false)}
+            onConfirm={handleNavigate}
+            btnOkText="OK"
+          />
         )}
-        {showCamera && (
+        {/* {showCamera && (
           <CameraModal setShowCamera={setShowCamera} setImage={setImage} />
-        )}
+        )} */}
       </div>
     </div>
   );

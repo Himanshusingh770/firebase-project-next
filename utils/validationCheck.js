@@ -8,6 +8,11 @@ const validateEmail = (email) => {
       return `${field} is required`;
     }
   }; 
+  const validatePicture = (field, data = null) => {
+    if (!data || data instanceof File) {
+      return `${field} is required`;
+    }
+  }; 
   const validatePassword = (password) => {
     let passwordError = validateField("Password", password);
     if (!passwordError) {
@@ -57,7 +62,11 @@ const validateEmail = (email) => {
       // Other fields validation
       errors.firstName = validateField("First name", userData?.firstName);
       errors.lastName = validateField("Last Name", userData?.lastName);
-      errors.picture = validateField("Picture", userData?.picture);
+      errors.previewPicture = validateField("Preview Picture", userData?.previewPicture);
+      // errors.uploadPicture = validatePicture("Upload Picture", userData?.uploadPicture);
+
+      console.log(userData);
+      
   
       if (!isUpdate) {
         errors.confirmPassword = validateField(

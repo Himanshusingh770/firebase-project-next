@@ -1,13 +1,20 @@
-"use client"
-import React from 'react';
+'use client';
 
-const HomePage = () => {
-  return (
-    <div>
-      <h1>Welcome to My Next.js App!</h1>
-      <p>This is the home page.</p>
-    </div>
-  );
+import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { setAuth } from '../redux/reducers/authReducer';
+
+const Home = () => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const accessToken = localStorage.getItem('accessToken');
+    if (accessToken) {
+      dispatch(setAuth(accessToken));
+    }
+  }, [dispatch]);
+
+  return <div>HomePage</div>;
 };
 
-export default HomePage;
+export default Home;
